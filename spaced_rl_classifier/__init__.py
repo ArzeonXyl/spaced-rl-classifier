@@ -173,16 +173,16 @@ class SpacedRLClassifier:
 
     @staticmethod
     def build_items(X, y) -> list:
-        """Helper untuk convert X, y jadi items [(tensor_feat, label, topic), ...]"""
+        """Helper untuk convert DataFrame / Series / numpy ke items [(tensor_feat, label, topic), ...]"""
         import torch
-        if not isinstance(X, torch.Tensor):
-            X_tensor = torch.tensor(X, dtype=torch.float32)
-        else:
-            X_tensor = X.float()
-        if isinstance(y, torch.Tensor):
-            y_list = y.cpu().numpy().tolist()
-        else:
-            y_list = list(y)
+        # Jika DataFrame, convert ke numpy
+        if isinstance(X, pd.DataFrame) or isinstance(X, pd.Series):
+            X = X.values
+        if isinstance(y, pd.Series):
+            y = y.values
+        # Tensor float
+        X_tensor = torch.tensor(X, dtype=torch.float32) if not isinstance(X, torch.Tensor) else X.float()
+        y_list = y.tolist() if isinstance(y, np.ndarray) else list(y)
         return [(X_tensor[i], int(y_list[i]), int(y_list[i])) for i in range(len(y_list))]
 
     def fit(self, items:List[Tuple[torch.Tensor,int,int]], train_count:int, epochs=50, batch_size=32,
