@@ -173,16 +173,36 @@ class SpacedRLClassifier:
 
     @staticmethod
     def build_items(X, y) -> list:
-        """Helper untuk convert DataFrame / Series / numpy ke items [(tensor_feat, label, topic), ...]"""
+        """Convert DataFrame / Series / numpy ke items [(tensor_feat, label, topic), ...]"""
         import torch
-        # Jika DataFrame, convert ke numpy
-        if isinstance(X, pd.DataFrame) or isinstance(X, pd.Series):
-            X = X.values
-        if isinstance(y, pd.Series):
-            y = y.values
-        # Tensor float
-        X_tensor = torch.tensor(X, dtype=torch.float32) if not isinstance(X, torch.Tensor) else X.float()
-        y_list = y.tolist() if isinstance(y, np.ndarray) else list(y)
+        import numpy as np
+        import pandas as pd
+
+        # pastikan X numeric
+        if isinstance(X, pd.DataFrame):
+            X = X.copy()
+            for col in X.columns:
+                X[col] = pd.to_numeric(X[col], errors='coerce')
+            X = X.fillna(0.0)
+            X_array = X.values
+        elif isinstance(X, pd.Series):
+            X_array = X.to_frame().values.astype(np.float32)
+        elif isinstance(X, np.ndarray):
+            X_array = X.astype(np.float32)
+        else:
+            X_array = X.float()  # kalau tensor
+
+        # y
+        if isinstance(y, (pd.Series, pd.DataFrame)):
+            y_array = y.values.astype(int)
+        elif isinstance(y, np.ndarray):
+            y_array = y.astype(int)
+        else:
+            y_array = np.array(list(map(int, y)))
+
+        X_tensor = torch.tensor(X_array, dtype=torch.float32)
+        y_list = y_array.tolist()
+
         return [(X_tensor[i], int(y_list[i]), int(y_list[i])) for i in range(len(y_list))]
 
     def fit(self, items:List[Tuple[torch.Tensor,int,int]], train_count:int, epochs=50, batch_size=32,
