@@ -1,4 +1,4 @@
-# spaced_rl_classifier.py
+# spaced_rl_classifier/__init__.py
 import os, random
 from collections import defaultdict
 from dataclasses import dataclass
@@ -76,7 +76,7 @@ class RLScheduler:
         if len(batch) < batch_size:
             remaining = [s for s in self.states if s not in batch]
             remaining.sort(key=lambda x: -x.difficulty)
-            batch += remaining[:(batch_size - len(batch)) - len(batch)]
+            batch += remaining[:batch_size - len(batch)]
         return batch
 
     def choose_interval_and_log(self, state: ItemState):
@@ -170,6 +170,20 @@ class SpacedRLClassifier:
             scaler = StandardScaler()
             X[num_cols] = scaler.fit_transform(X[num_cols])
         return X, y, scaler
+
+    @staticmethod
+    def build_items(X, y) -> list:
+        """Helper untuk convert X, y jadi items [(tensor_feat, label, topic), ...]"""
+        import torch
+        if not isinstance(X, torch.Tensor):
+            X_tensor = torch.tensor(X, dtype=torch.float32)
+        else:
+            X_tensor = X.float()
+        if isinstance(y, torch.Tensor):
+            y_list = y.cpu().numpy().tolist()
+        else:
+            y_list = list(y)
+        return [(X_tensor[i], int(y_list[i]), int(y_list[i])) for i in range(len(y_list))]
 
     def fit(self, items:List[Tuple[torch.Tensor,int,int]], train_count:int, epochs=50, batch_size=32,
             k_retrieval=3, lr=1e-3, lr_policy=1e-4):
