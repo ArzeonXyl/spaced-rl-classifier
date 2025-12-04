@@ -235,7 +235,7 @@ class SpacedRLClassifier:
                             logits = self.model(xs[i].unsqueeze(0))
                             probs = torch.softmax(logits, dim=1)
                             pred = torch.argmax(probs, dim=1).item()
-                            if pred == ys[i].item() and float(probs.max().item()) > 0.6:
+                            if pred == ys[i].item() and float(probs.max().item()) > 0.4:
                                 item_success = True
                                 break
                         success_flags.append(item_success)
