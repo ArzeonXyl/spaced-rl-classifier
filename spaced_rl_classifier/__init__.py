@@ -212,7 +212,7 @@ class SpacedRLClassifier:
         self.model.to(self.device)
         self.policy.to(self.device)
         self.states = [ItemState(idx=i, topic=items[i][2]) for i in range(len(items))]
-        scheduler = RLScheduler(self.states, self.policy, device=self.device)
+        scheduler = RLScheduler(self.states[:train_count], self.policy, device=self.device)
         opt = optim.Adam(self.model.parameters(), lr=lr)
         opt_policy = optim.Adam(self.policy.parameters(), lr=lr_policy)
         criterion = nn.CrossEntropyLoss()
